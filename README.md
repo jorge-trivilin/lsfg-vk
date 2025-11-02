@@ -21,6 +21,7 @@ After installation, you can open the graphical configuration editor **lsfg-vk-ui
 
 * For detailed instructions on setting up your preferences, visit the [Configuring lsfg-vk](https://github.com/PancakeTAS/lsfg-vk/wiki/Configuring-lsfg%E2%80%90vk) page.
 * Learn how to use **lsfg-vk**'s integrated benchmark on the [Using lsfg-vk's integrated benchmark](https://github.com/PancakeTAS/lsfg-vk/wiki/Using-lsfg%E2%80%90vk's-integrated-benchmark) page.
+* **Emulator Users:** See [EMULATOR_SETUP.md](EMULATOR_SETUP.md) for instructions on using lsfg-vk with PCSX2, Dolphin, Retroarch, and other emulators.
 
 ## Building from Source
 
