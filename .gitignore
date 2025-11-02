@@ -1,5 +1,6 @@
 # cmake files
 /build
+/_codeql_build_dir
 
 # cargo files
 /ui/target

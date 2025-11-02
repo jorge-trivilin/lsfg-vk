@@ -37,6 +37,88 @@ namespace {
             return VkPresentModeKHR::VK_PRESENT_MODE_IMMEDIATE_KHR;
         return VkPresentModeKHR::VK_PRESENT_MODE_FIFO_KHR;
     }
+
+    /// Match process name with wildcard support.
+    /// Supports '*' as wildcard character for matching any sequence of characters.
+    /// Returns true if the pattern matches the text.
+    bool match_with_wildcard(const std::string& text, const std::string& pattern) {
+        const size_t text_len = text.length();
+        const size_t pattern_len = pattern.length();
+        
+        // Check if pattern contains wildcard
+        size_t wildcard_pos = pattern.find('*');
+        if (wildcard_pos == std::string::npos) {
+            // No wildcard, exact match required
+            return text == pattern;
+        }
+        
+        // Pattern has wildcard(s)
+        std::string prefix = pattern.substr(0, wildcard_pos);
+        std::string suffix;
+        
+        // Find last wildcard for suffix
+        size_t last_wildcard = pattern.rfind('*');
+        if (last_wildcard != pattern_len - 1) {
+            suffix = pattern.substr(last_wildcard + 1);
+        }
+        
+        // Check prefix
+        if (!prefix.empty() && text.substr(0, prefix.length()) != prefix) {
+            return false;
+        }
+        
+        // Check suffix
+        if (!suffix.empty()) {
+            if (text.length() < suffix.length()) {
+                return false;
+            }
+            if (text.substr(text.length() - suffix.length()) != suffix) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    /// Check if a process name matches the configured executable name.
+    /// Supports:
+    /// - Exact match of command name
+    /// - Path ending with exe name
+    /// - Wildcard matching with '*' character
+    /// - Substring matching for emulator processes
+    bool matches_process(
+            const std::pair<std::string, std::string>& name,
+            const std::string& exe) {
+        // Try exact match with command name
+        if (name.second == exe) {
+            return true;
+        }
+        
+        // Try path ends with exe
+        if (name.first.ends_with(exe)) {
+            return true;
+        }
+        
+        // Try wildcard matching if pattern contains '*'
+        if (exe.find('*') != std::string::npos) {
+            if (match_with_wildcard(name.second, exe)) {
+                return true;
+            }
+            // Also try matching the full path
+            if (match_with_wildcard(name.first, exe)) {
+                return true;
+            }
+        }
+        
+        // For substring matching: if the command name contains the exe pattern
+        // This helps with emulators where the actual binary might have suffixes
+        // e.g., "pcsx2" matches "pcsx2-qt"
+        if (name.second.find(exe) != std::string::npos) {
+            return true;
+        }
+        
+        return false;
+    }
 }
 
 void Config::updateConfig(
@@ -110,7 +192,7 @@ void Config::updateConfig(
             const auto* game = elem.as_table();
 
             const auto* exe = game->at("exe").value_or("?");
-            if (!name.first.ends_with(exe) && name.second != exe)
+            if (!matches_process(name, exe))
                 continue;
 
             gameConf = Config::currentConf;
